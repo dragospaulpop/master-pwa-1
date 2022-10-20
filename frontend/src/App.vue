@@ -71,6 +71,17 @@ export default {
     toggleDone (index) {
       this.todoList[index].done = !this.todoList[index].done
     }
+  },
+
+  async mounted () {
+    try {
+      const response = await fetch('http://localhost:3000/todos')
+      const result = await response.json()
+
+      this.todoList = result
+    } catch (err) {
+      console.log(err)
+    }
   }
 }
 </script>
