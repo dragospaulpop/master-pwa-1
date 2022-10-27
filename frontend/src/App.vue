@@ -3,6 +3,11 @@
     <v-main>
       <v-container fluid fill-height>
         <v-row>
+          <v-col>
+            <v-btn block @click="whoNext">Who next?</v-btn>
+          </v-col>
+        </v-row>
+        <v-row>
           <v-col align-center class="text-center">
             <v-card>
               <v-card-title>TO DO List:</v-card-title>
@@ -16,14 +21,17 @@
                   hint="Add your todo"
                   label="To do:"></v-text-field>
                 <v-list>
-                  <v-list-item v-for="(item, index) in todoList" :key="item.value">
+                  <v-list-item v-for="(item, index) in todoList" :key="item.id">
                     <v-list-item-action>
-                      <v-btn icon color="error" @click="removeTodo(index)">
+                      <v-btn icon color="error" @click="removeTodo(item.id)">
                         <v-icon>mdi-delete</v-icon>
                       </v-btn>
                     </v-list-item-action>
                     <v-list-item-content>
-                      <v-list-item-title :class="{ 'text-decoration-line-through': item.done }">{{ item.value }}</v-list-item-title>
+                      <v-list-item-title :class="{ 'text-decoration-line-through': item.done }">{{ item.title }}</v-list-item-title>
+                      <v-list-item-subtitle>
+                        {{item.id}}
+                      </v-list-item-subtitle>
                     </v-list-item-content>
                     <v-list-item-action>
                       <v-btn icon :color="item.done ? 'success' : 'error'"  @click="toggleDone(index)">
@@ -52,36 +60,67 @@ export default {
   }),
 
   methods: {
-    addTodo () {
-      if (this.todo.length) {
-        const position = this.todoList.findIndex(todo => todo.value === this.todo)
-
-        if (position === -1) {
-          this.todoList.push({
-            value: this.todo,
-            done: false
+    whoNext () {
+      alert(`Winner: ${Math.floor(Math.random() * 4 + 1)}`)
+    },
+    async addTodo () {
+      try {
+        const response = await fetch('http://localhost:3000/todos', {
+          method: 'post',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            title: this.todo
           })
-          this.todo = ''
+        })
+        if (response.ok) {
+          this.fetchdata()
+        } else {
+          const error = await response.text()
+          throw new Error(error)
         }
+      } catch (error) {
+        console.log(error)
       }
     },
-    removeTodo (index) {
-      this.todoList.splice(index, 1)
+    async removeTodo (id) {
+      try {
+        const response = await fetch('http://localhost:3000/todos/' + id, {
+          method: 'delete'
+        })
+        if (response.ok) {
+          this.fetchdata()
+        } else {
+          const error = await response.text()
+          throw new Error(error)
+        }
+      } catch (error) {
+        console.log(error)
+      }
     },
     toggleDone (index) {
       this.todoList[index].done = !this.todoList[index].done
+    },
+    async fetchdata () {
+      try {
+        const response = await fetch('http://localhost:3000/todos')
+        if (response.ok) {
+          const result = await response.json()
+          this.todoList = result
+        } else {
+          const error = await response.text()
+          throw new Error(error)
+        }
+      } catch (err) {
+        console.log('eroare', err.message)
+      }
     }
   },
 
   async mounted () {
-    try {
-      const response = await fetch('http://localhost:3000/todos')
-      const result = await response.json()
-
-      this.todoList = result
-    } catch (err) {
-      console.log(err)
-    }
+    this.fetchdata()
   }
 }
 </script>
