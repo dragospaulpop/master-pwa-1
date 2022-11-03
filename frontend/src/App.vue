@@ -19,22 +19,38 @@
                   append-outer-icon="mdi-plus"
                   @click:append-outer="addTodo"
                   hint="Add your todo"
-                  label="To do:"></v-text-field>
+                  label="To do:">
+                </v-text-field>
                 <v-list>
-                  <v-list-item v-for="(item, index) in todoList" :key="item.id">
+                  <v-list-item v-for="item in todoList" :key="item.id">
                     <v-list-item-action>
                       <v-btn icon color="error" @click="removeTodo(item.id)">
                         <v-icon>mdi-delete</v-icon>
                       </v-btn>
                     </v-list-item-action>
                     <v-list-item-content>
-                      <v-list-item-title :class="{ 'text-decoration-line-through': item.done }">{{ item.title }}</v-list-item-title>
+                      <v-list-item-title :class="{ 'text-decoration-line-through': item.done }">
+                        {{ item.title }}
+                        <v-menu :close-on-content-click="false" offset-x>
+                          <template v-slot:activator="{ on, attrs }">
+                            <v-btn icon color="blue" v-bind="attrs" v-on="on">
+                              <v-icon>mdi-pencil</v-icon>
+                            </v-btn>
+                          </template>
+                          <v-text-field
+                            outlined
+                            :value="item.title"
+                            @keydown.enter="editTodo($event, item.id)"
+                            disable-hints>
+                          </v-text-field>
+                        </v-menu>
+                      </v-list-item-title>
                       <v-list-item-subtitle>
                         {{item.id}}
                       </v-list-item-subtitle>
                     </v-list-item-content>
                     <v-list-item-action>
-                      <v-btn icon :color="item.done ? 'success' : 'error'"  @click="toggleDone(index)">
+                      <v-btn icon :color="item.done ? 'success' : 'error'"  @click="toggleDone(item.id)">
                         <v-icon>
                           {{ item.done ? 'mdi-check' : 'mdi-close' }}
                         </v-icon>
@@ -100,8 +116,50 @@ export default {
         console.log(error)
       }
     },
-    toggleDone (index) {
-      this.todoList[index].done = !this.todoList[index].done
+    async toggleDone (id) {
+      const todo = this.todoList.find(t => t.id === id)
+      try {
+        const response = await fetch(`http://localhost:3000/todos/${id}`, {
+          method: 'PATCH',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            done: !todo.done
+          })
+        })
+        if (response.ok) {
+          this.fetchdata()
+        } else {
+          const error = await response.text()
+          throw new Error(error)
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    async editTodo ($event, id) {
+      try {
+        const response = await fetch(`http://localhost:3000/todos/${id}`, {
+          method: 'PATCH',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            title: $event.target.value
+          })
+        })
+        if (response.ok) {
+          this.fetchdata()
+        } else {
+          const error = await response.text()
+          throw new Error(error)
+        }
+      } catch (error) {
+        console.log(error)
+      }
     },
     async fetchdata () {
       try {

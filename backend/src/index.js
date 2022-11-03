@@ -31,13 +31,32 @@ app.post('/todos', (req, res) => {
   res.send(todos.pop())
 })
 
-app.delete('/todos/:id',(req, res)=>{
+app.delete('/todos/:id', (req, res)=>{
   const filepath = path.join(__dirname, "../db/index.json")
   const todos = fs.readJSONSync(filepath)
   const filter = todos.filter(todo => todo.id!=req.params.id)
   fs.writeJSONSync(filepath, filter)
   res.send({message:`todo ${req.params.id} removed succesfully`})
-} )
+})
+
+app.patch('/todos/:id', (req, res) => {
+  const id = req.params.id
+
+  const filepath = path.join(__dirname, "../db/index.json")
+  const todos = fs.readJSONSync(filepath)
+  const todo = todos.find(t => t.id === id)
+
+  const keys = Object.keys(req.body)
+  if (keys.length) {
+    keys.forEach(key => {
+      todo[key] = req.body[key]
+    })
+  }
+
+  fs.writeJSONSync(filepath, todos)
+
+  res.status(200).send()
+})
 
 app.listen(port, () => {
   console.log(`Our example app listening on port ${port}`)
