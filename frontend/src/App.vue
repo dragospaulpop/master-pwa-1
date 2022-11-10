@@ -59,6 +59,31 @@
             </v-card>
           </v-col>
         </v-row>
+        <v-dialog v-model="dialog" width="75vw" persistent>
+          <v-card>
+            <v-card-title>Login</v-card-title>
+            <v-card-text>
+              <v-text-field
+                outlined
+                v-model="email"
+                append-outer-icon="mdi-email"
+                hint="Email"
+                label="Email">
+              </v-text-field>
+              <v-text-field
+                type="password"
+                outlined
+                v-model="pass"
+                append-outer-icon="mdi-lock"
+                hint="Pass"
+                label="Pass">
+              </v-text-field>
+            </v-card-text>
+            <v-card-actions>
+              <v-btn @click="login">Login</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-container>
     </v-main>
   </v-app>
@@ -71,7 +96,10 @@ export default {
   name: 'TheApp',
   data: () => ({
     todo: '',
-    todoList: []
+    todoList: [],
+    email: null,
+    pass: null,
+    dialog: false
   }),
 
   methods: {
@@ -124,16 +152,31 @@ export default {
       } catch (err) {
         console.log('eroare', err.message)
       }
+    },
+
+    async login () {
+      try {
+        await feathers.authenticate({
+          strategy: 'local',
+          email: this.email,
+          password: this.pass
+        })
+        this.dialog = false
+        this.fetchdata()
+      } catch (err) {
+        console.log(err)
+      }
     }
   },
 
   async mounted () {
     try {
-      await feathers.authenticate({
-        strategy: 'local',
-        email: 'test@test.test',
-        password: 'test'
-      })
+      try {
+        await feathers.reAuthenticate()
+      } catch (err) {
+        console.log(err)
+        this.dialog = true
+      }
       this.fetchdata()
     } catch (err) {
       console.log(err)
