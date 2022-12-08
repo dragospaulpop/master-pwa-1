@@ -1,5 +1,18 @@
 <template>
   <v-app>
+    <v-app-bar color="primary" dense app>
+      <v-spacer></v-spacer>
+      <template v-if="authenticated">
+        {{ authenticated }}
+      </template>
+      <template v-else>
+        pls log in
+      </template>
+      <v-spacer></v-spacer>
+      <v-btn icon @click="logOut">
+        <v-icon>mdi-logout</v-icon>
+      </v-btn>
+    </v-app-bar>
     <v-main>
       <v-container fluid fill-height>
         <v-row>
@@ -90,97 +103,65 @@
 </template>
 
 <script>
-import { feathers, todos } from './feathers'
-
 export default {
   name: 'TheApp',
   data: () => ({
     todo: '',
-    todoList: [],
     email: null,
     pass: null,
     dialog: false
   }),
 
-  methods: {
-    async addTodo () {
-      try {
-        await todos.create({
-          title: this.todo
-        })
-        await this.fetchdata()
-      } catch (error) {
-        console.log(error)
-      } finally {
-        this.todo = ''
-      }
+  computed: {
+    todoList () {
+      return this.$store.getters.todos
     },
-    async removeTodo (id) {
-      try {
-        await todos.remove(id)
-        await this.fetchdata()
-      } catch (error) {
-        console.log(error)
-      }
-    },
-    async toggleDone (id) {
-      const todo = this.todoList.find(t => t._id === id)
-      try {
-        await todos.patch(id, {
-          done: !todo.done
-        })
-        await this.fetchdata()
-      } catch (error) {
-        console.log(error)
-      }
-    },
-    async editTodo ($event, id) {
-      try {
-        await todos.patch(id, {
-          title: $event.target.value
-        })
-        await this.fetchdata()
-      } catch (error) {
-        console.log(error)
-      }
-    },
-    async fetchdata () {
-      try {
-        const res = await todos.find({})
+    authenticated () {
+      return this.$store.getters.email
+    }
+  },
 
-        this.todoList = res.data
-      } catch (err) {
-        console.log('eroare', err.message)
-      }
-    },
-
-    async login () {
-      try {
-        await feathers.authenticate({
-          strategy: 'local',
-          email: this.email,
-          password: this.pass
-        })
-        this.dialog = false
-        this.fetchdata()
-      } catch (err) {
-        console.log(err)
+  watch: {
+    authenticated: {
+      immediate: true,
+      handler (value) {
+        if (!value) {
+          this.dialog = true
+        } else {
+          this.dialog = false
+        }
       }
     }
   },
 
-  async mounted () {
-    try {
-      try {
-        await feathers.reAuthenticate()
-      } catch (err) {
-        console.log(err)
-        this.dialog = true
-      }
-      this.fetchdata()
-    } catch (err) {
-      console.log(err)
+  methods: {
+    addTodo () {
+      this.$store.dispatch('addTodo', this.todo)
+      this.todo = ''
+    },
+    removeTodo (id) {
+      this.$store.dispatch('removeTodo', id)
+    },
+    toggleDone (id) {
+      this.$store.dispatch('toggleDone', id)
+    },
+    editTodo ($event, id) {
+      this.$store.dispatch('editTodo', { id, value: $event.target.value })
+    },
+
+    login () {
+      this.$store.dispatch('login', { email: this.email, pass: this.pass })
+      this.email = null
+      this.pass = null
+      this.dialog = false
+    },
+    async logOut () {
+      this.$store.dispatch('logout')
     }
+  },
+
+  async mounted () {
+    this.$store.dispatch('reAuthenticate')
   }
 }
 </script>
