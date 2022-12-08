@@ -37,6 +37,7 @@
                       </v-btn>
                     </v-list-item-action>
                     <v-list-item-content>
+
                       <v-list-item-title :class="{ 'text-decoration-line-through': item.done }">
                         {{ item.title }}
                         <v-menu :close-on-content-click="false" offset-x>
@@ -55,9 +56,17 @@
                           </v-sheet>
                         </v-menu>
                       </v-list-item-title>
+
                       <v-list-item-subtitle>
-                        {{item.id}}
+                        <v-icon x-small>mdi-plus</v-icon>
+                        {{parseDate(item.createdAt)}}
                       </v-list-item-subtitle>
+
+                      <v-list-item-subtitle>
+                        <v-icon x-small>mdi-pencil</v-icon>
+                        {{parseDate(item.updatedAt)}}
+                      </v-list-item-subtitle>
+
                     </v-list-item-content>
                     <v-list-item-action>
                       <v-btn icon :color="item.done ? 'success' : 'error'"  @click="toggleDone(item._id)">
@@ -135,6 +144,9 @@ export default {
   },
 
   methods: {
+    parseDate (d) {
+      return new Date(d).toLocaleString('ro-RO')
+    },
     addTodo () {
       this.$store.dispatch('addTodo', this.todo)
       this.todo = ''
