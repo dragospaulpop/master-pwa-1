@@ -90,7 +90,8 @@
                 v-model="email"
                 append-outer-icon="mdi-email"
                 hint="Email"
-                label="Email">
+                label="Email"
+                id="email">
               </v-text-field>
               <v-text-field
                 type="password"
@@ -98,11 +99,12 @@
                 v-model="pass"
                 append-outer-icon="mdi-lock"
                 hint="Pass"
-                label="Pass">
+                label="Pass"
+                id="pass">
               </v-text-field>
             </v-card-text>
             <v-card-actions>
-              <v-btn @click="login">Login</v-btn>
+              <v-btn @click="login" id="login">Login</v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
